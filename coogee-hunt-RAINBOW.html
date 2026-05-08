@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Coogee Hunt — Rainbow HQ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --navy: #0f2a45;
+    --gold: #c8a84b;
+    --sand: #e8e0d0;
+    --white: #faf8f4;
+    --green: #3B6D11;
+    --green-bg: #EAF3DE;
+    --green-border: #C0DD97;
+    --red: #E24B4A;
+    --red-bg: #FCEBEB;
+    --surface: #f5f3ef;
+    --border: rgba(0,0,0,0.1);
+    --text: #1c1c1c;
+    --text-mid: #666;
+    --text-muted: #aaa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--text);
+    overscroll-behavior: none;
+  }
+
+  /* ── LAYOUT ── */
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100%;
+    background: var(--sand);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  .top-bar {
+    background: var(--navy);
+    padding: 1rem 1.1rem;
+    padding-top: max(1rem, env(safe-area-inset-top));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .top-title {
+    font-family: 'Playfair Display', serif;
+    color: var(--white);
+    font-size: 1.3rem;
+    line-height: 1.2;
+  }
+  .top-sub {
+    color: rgba(255,255,255,0.45);
+    font-size: 0.78rem;
+    margin-top: 2px;
+  }
+  .status-pill {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(200,168,75,0.2);
+    color: var(--gold);
+    white-space: nowrap;
+    transition: background 0.3s, color 0.3s;
+  }
+  .status-pill.active { background: rgba(59,109,17,0.25); color: #7bc44a; }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    background: var(--navy);
+    padding: 0 1.1rem 0.75rem;
+    gap: 0.5rem;
+  }
+  .tab {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: rgba(255,255,255,0.5);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .tab.active {
+    background: var(--gold);
+    color: var(--navy);
+    border-color: var(--gold);
+    font-weight: 600;
+  }
+
+  /* ── PANELS ── */
+  .panel { display: none; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 1rem 1.1rem; padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); flex-direction: column; gap: 1rem; }
+  .panel.active { display: flex; }
+
+  /* ── ADD FORM ── */
+  .card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 2px 10px rgba(15,42,69,0.08);
+  }
+  .card-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .form-row { display: flex; gap: 0.6rem; }
+  .field { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+  .field label { font-size: 0.72rem; font-weight: 600; color: var(--text-mid); letter-spacing: 0.05em; text-transform: uppercase; }
+  .field input {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus { border-color: var(--navy); background: white; }
+  .field input.error { border-color: var(--red); }
+
+  .pen-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .pen-label { font-size: 0.82rem; color: var(--text-mid); flex: 1; }
+  .pen-btn {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.1s;
+  }
+  .pen-btn:active { background: #ddd; }
+  .pen-count { font-size: 1rem; font-weight: 600; min-width: 24px; text-align: center; color: var(--text); }
+  .pen-cost { font-size: 0.8rem; font-weight: 600; color: var(--red); min-width: 48px; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 0.85rem;
+    border-radius: 12px;
+    border: none;
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.75rem;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .submit-btn:active { opacity: 0.85; transform: scale(0.98); }
+
+  /* ── LEADERBOARD ── */
+  .lb-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .lb-meta-label { font-size: 0.78rem; color: var(--text-mid); }
+  .clear-btn {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0;
+  }
+  .clear-btn:hover { color: var(--red); }
+
+  .empty {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.7;
+  }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+  .team-row {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 2px 10px rgba(15,42,69,0.07);
+    animation: slideIn 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .team-row.winner {
+    border: 2px solid var(--gold);
+  }
+  .team-row.winner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(200,168,75,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .place {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text-mid);
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-family: 'Playfair Display', serif;
+  }
+  .place.gold { background: var(--gold); color: white; font-size: 1rem; }
+  .place.silver { background: #9e9e9e; color: white; font-size: 1rem; }
+  .place.bronze { background: #a0673a; color: white; font-size: 1rem; }
+
+  .team-info { flex: 1; min-width: 0; }
+  .team-name-lb { font-size: 0.95rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .team-detail { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+  .pen-tag { color: var(--red); }
+  .bonus-tag { color: var(--green); }
+
+  .team-time {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: var(--navy);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .team-row.winner .team-time { color: #7a4f00; }
+
+  .del-btn {
+    background: none; border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .del-btn:hover { color: var(--red); }
+
+  /* ── TRIVIA PANEL ── */
+  .trivia-row {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 2px 10px rgba(15,42,69,0.07);
+  }
+  .trivia-team-name { font-size: 0.95rem; font-weight: 600; color: var(--text); flex: 1; }
+  .trivia-controls { display: flex; align-items: center; gap: 0.5rem; }
+  .trivia-adj-btn {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .trivia-adj-btn:active { background: #ddd; }
+  .trivia-count { font-size: 0.95rem; font-weight: 600; min-width: 20px; text-align: center; }
+  .trivia-mins {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 10px;
+    min-width: 52px;
+    text-align: center;
+  }
+  .trivia-mins.has-bonus { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .trivia-mins.no-bonus { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
+
+  .trivia-note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 0.5rem 0;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="top-bar">
+    <div>
+      <div class="top-title">🌈 Rainbow HQ</div>
+      <div class="top-sub">Log teams as they arrive</div>
+    </div>
+    <div class="status-pill" id="status-pill">Race on</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('log')">Log finish</button>
+    <button class="tab" onclick="switchTab('board')">Leaderboard</button>
+    <button class="tab" onclick="switchTab('trivia')">Trivia</button>
+  </div>
+
+  <!-- LOG TAB -->
+  <div class="panel active" id="panel-log">
+    <div class="card">
+      <div class="card-title">Team arrival</div>
+      <div class="form-row">
+        <div class="field">
+          <label>Team name</label>
+          <input type="text" id="inp-name" placeholder="e.g. Team Shark" maxlength="20" autocomplete="off">
+        </div>
+        <div class="field" style="max-width:90px;">
+          <label>Time (m:ss)</label>
+          <input type="text" id="inp-time" placeholder="24:07" maxlength="6">
+        </div>
+      </div>
+      <div class="pen-row">
+        <span class="pen-label">Clues used</span>
+        <button class="pen-btn" onclick="changePen(-1)">−</button>
+        <span class="pen-count" id="pen-count">0</span>
+        <button class="pen-btn" onclick="changePen(1)">+</button>
+        <span class="pen-cost" id="pen-cost"></span>
+      </div>
+      <button class="submit-btn" onclick="addTeam()">Log team finish ✓</button>
+    </div>
+
+    <div class="card" style="background: rgba(200,168,75,0.12); box-shadow: none;">
+      <div class="card-title" style="color: #7a5800;">Reminder</div>
+      <p style="font-size: 0.83rem; color: #7a5800; line-height: 1.6;">Read the team's finish screen for their raw time and clues used. Trivia bonuses are logged separately in the Trivia tab.</p>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD TAB -->
+  <div class="panel" id="panel-board">
+    <div class="lb-meta">
+      <span class="lb-meta-label" id="lb-meta-label">No teams yet</span>
+      <button class="clear-btn" onclick="clearAll()">Clear all</button>
+    </div>
+    <div id="lb-list">
+      <div class="empty">
+        <div class="empty-icon">🏁</div>
+        No teams logged yet.<br>Head to the Log tab to add the first finisher!
+      </div>
+    </div>
+  </div>
+
+  <!-- TRIVIA TAB -->
+  <div class="panel" id="panel-trivia">
+    <p class="trivia-note" id="trivia-note">Teams appear here once logged.<br>Tap + for each correct trivia answer (−1 min each).</p>
+    <div id="trivia-list"></div>
+  </div>
+
+</div>
+
+<script>
+let teams = [];
+let penCount = 0;
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const tabs = ['log','board','trivia'];
+    t.classList.toggle('active', tabs[i] === name);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+function changePen(d) {
+  penCount = Math.max(0, penCount + d);
+  document.getElementById('pen-count').textContent = penCount;
+  document.getElementById('pen-cost').textContent = penCount > 0 ? '+' + (penCount * 2) + ' min' : '';
+}
+
+function parseTime(s) {
+  s = s.trim().replace(/[^0-9:]/g,'');
+  if (!s) return null;
+  if (s.includes(':')) {
+    const p = s.split(':');
+    return (parseInt(p[0])||0)*60 + (parseInt(p[1])||0);
+  }
+  return parseInt(s)*60;
+}
+
+function fmt(secs) {
+  const m = Math.floor(secs/60);
+  const s = secs % 60;
+  return m + ':' + String(s).padStart(2,'0');
+}
+
+function effectiveSecs(t) {
+  return t.adjustedSecs - (t.triviaBonuses * 60);
+}
+
+function addTeam() {
+  const nameEl = document.getElementById('inp-name');
+  const timeEl = document.getElementById('inp-time');
+  const name = nameEl.value.trim();
+  const rawSecs = parseTime(timeEl.value);
+
+  nameEl.classList.remove('error');
+  timeEl.classList.remove('error');
+
+  if (!name) { nameEl.classList.add('error'); nameEl.focus(); return; }
+  if (!rawSecs || rawSecs <= 0) { timeEl.classList.add('error'); timeEl.focus(); return; }
+
+  teams.push({
+    id: Date.now(),
+    name,
+    rawSecs,
+    penCount,
+    adjustedSecs: rawSecs + penCount * 2 * 60,
+    triviaBonuses: 0
+  });
+  sort();
+
+  nameEl.value = '';
+  timeEl.value = '';
+  penCount = 0;
+  document.getElementById('pen-count').textContent = '0';
+  document.getElementById('pen-cost').textContent = '';
+
+  render();
+  switchTab('board');
+}
+
+function sort() {
+  teams.sort((a,b) => effectiveSecs(a) - effectiveSecs(b));
+}
+
+function removeTeam(id) {
+  teams = teams.filter(t => t.id !== id);
+  render();
+}
+
+function addBonus(id, delta) {
+  const t = teams.find(t => t.id === id);
+  if (!t) return;
+  t.triviaBonuses = Math.max(0, t.triviaBonuses + delta);
+  sort();
+  render();
+}
+
+function clearAll() {
+  if (!teams.length) return;
+  if (confirm('Clear all teams from the leaderboard?')) { teams = []; render(); }
+}
+
+function render() {
+  renderLeaderboard();
+  renderTrivia();
+  updateStatus();
+}
+
+function renderLeaderboard() {
+  const list = document.getElementById('lb-list');
+  const meta = document.getElementById('lb-meta-label');
+
+  if (!teams.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🏁</div>No teams logged yet.<br>Head to the Log tab to add the first finisher!</div>';
+    meta.textContent = 'No teams yet';
+    return;
+  }
+
+  meta.textContent = teams.length + ' team' + (teams.length !== 1 ? 's' : '') + ' finished';
+
+  const medals = ['🥇','🥈','🥉'];
+  const mClass = ['gold','silver','bronze'];
+
+  list.innerHTML = teams.map((t, i) => {
+    const eff = effectiveSecs(t);
+    const penStr = t.penCount > 0 ? `<span class="pen-tag"> +${t.penCount*2}m clues</span>` : '';
+    const bonStr = t.triviaBonuses > 0 ? `<span class="bonus-tag"> −${t.triviaBonuses}m trivia</span>` : '';
+    const detail = (t.penCount > 0 || t.triviaBonuses > 0)
+      ? `Raw ${fmt(t.rawSecs)}${penStr}${bonStr}`
+      : `Raw time: ${fmt(t.rawSecs)}`;
+
+    return `<div class="team-row${i===0?' winner':''}">
+      <div class="place ${i<3?mClass[i]:''}">${i<3?medals[i]:i+1}</div>
+      <div class="team-info">
+        <div class="team-name-lb">${t.name}</div>
+        <div class="team-detail">${detail}</div>
+      </div>
+      <div class="team-time">${fmt(eff)}</div>
+      <button class="del-btn" onclick="removeTeam(${t.id})">×</button>
+    </div>`;
+  }).join('');
+}
+
+function renderTrivia() {
+  const list = document.getElementById('trivia-list');
+  const note = document.getElementById('trivia-note');
+
+  if (!teams.length) {
+    note.style.display = 'block';
+    list.innerHTML = '';
+    return;
+  }
+  note.style.display = 'none';
+
+  list.innerHTML = teams.map(t => {
+    const hasBonus = t.triviaBonuses > 0;
+    return `<div class="trivia-row">
+      <span class="trivia-team-name">${t.name}</span>
+      <div class="trivia-controls">
+        <button class="trivia-adj-btn" onclick="addBonus(${t.id},-1)">−</button>
+        <span class="trivia-count">${t.triviaBonuses}</span>
+        <button class="trivia-adj-btn" onclick="addBonus(${t.id},1)">+</button>
+        <span class="trivia-mins ${hasBonus?'has-bonus':'no-bonus'}">${hasBonus?'−'+t.triviaBonuses+' min':'no bonus'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateStatus() {
+  const pill = document.getElementById('status-pill');
+  if (!teams.length) {
+    pill.textContent = 'Race on';
+    pill.classList.remove('active');
+  } else {
+    pill.textContent = teams.length + ' team' + (teams.length!==1?'s':'') + ' in';
+    pill.classList.add('active');
+  }
+}
+</script>
+</body>
+</html>
